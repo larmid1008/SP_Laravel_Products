@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\DTO\Product\CreateProductCommand;
+use App\DTO\Product\DeleteProductCommand;
 use App\DTO\Product\UpdateProductCommand;
 use App\Handler\Product\CreateProductHandler;
+use App\Handler\Product\DeleteProductHandler;
 use App\Handler\Product\UpdateProductHandler;
 use App\Http\Requests\Product\CreateProductRequest;
 use App\Http\Resources\Product\ProductFullResource;
@@ -78,11 +80,19 @@ class ProductsController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param Product $product
+     * @param DeleteProductHandler $handler
+     * @return Response
+     * @throws UnknownProperties
      */
-    public function destroy($id)
+    public function destroy(Product $product, DeleteProductHandler $handler)
     {
-        //
+        $handler->handle(
+            new DeleteProductCommand(
+                product: $product,
+            )
+        );
+
+        return response()->noContent();
     }
 }
