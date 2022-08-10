@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\DTO\Product\CreateProductCommand;
+use App\DTO\Product\UpdateProductCommand;
 use App\Handler\Product\CreateProductHandler;
+use App\Handler\Product\UpdateProductHandler;
 use App\Http\Requests\Product\CreateProductRequest;
 use App\Http\Resources\Product\ProductFullResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class ProductsController extends Controller
@@ -52,13 +55,24 @@ class ProductsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param CreateProductRequest $request
+     * @param Product $product
+     * @param UpdateProductHandler $handler
+     * @return ProductFullResource
+     * @throws UnknownProperties
      */
-    public function update(Request $request, $id)
+    public function update(CreateProductRequest $request, Product $product, UpdateProductHandler $handler)
     {
-        //
+        $command = new UpdateProductCommand(
+            product: $product,
+            title: $request->get('title'),
+            description: $request->get('description'),
+            price: $request->get('price'),
+            isPublished: $request->get('is_published'),
+            categories: $request->get('categories'),
+        );
+
+        return new ProductFullResource($handler->handle($command));
     }
 
     /**
