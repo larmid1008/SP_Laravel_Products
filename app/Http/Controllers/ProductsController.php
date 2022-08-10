@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\Product\ProductFullResource;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -22,9 +23,50 @@ class ProductsController extends Controller
         return ProductFullResource::collection(
             QueryBuilder::for(Product::class)
                 ->with('categories')
+                ->withTrashed()
                 ->when($search, function (Builder $builder) use ($search) {
-                    $builder->where('title',  'ilike', '%'. $search .'%');
+                    $builder->where('title',  'ilike', "%$search%");
                 })
+                ->allowedFilters([
+                    AllowedFilter::callback('category_id', function (Builder $builder, $value) {
+                        $builder->whereHas('categories', function (Builder $builder) use ($value) {
+                            $builder->where('categories.id', $value);
+                        });
+                    }),
+                    AllowedFilter::callback('category_title', function (Builder $builder, $value) {
+                        $builder->whereHas('categories', function (Builder $builder) use ($value) {
+                            $builder->where('categories.title', 'ilike', "%$value%");
+                        });
+                    }),
+                    AllowedFilter::callback('price_start', function (Builder $builder, $value) {
+                        $builder->where('products.price', '>=', $value);
+                    }),
+                    AllowedFilter::callback('price_end', function (Builder $builder, $value) {
+                        $builder->where('products.price', '<=', $value);
+                    }),
+                    AllowedFilter::callback('is_published', function (Builder $builder, $value) {
+                        $builder->when(
+                            $value,
+                            function (Builder $builder) {
+                                $builder->whereNotNull('products.published_at');
+                            },
+                            function (Builder $builder) {
+                                $builder->whereNull('products.published_at');
+                            },
+                        );
+                    }),
+                    AllowedFilter::callback('trashed', function (Builder $builder, $value) {
+                        $builder->when(
+                            $value,
+                            function (Builder $builder) {
+                                $builder->whereNotNull('products.deleted_at');
+                            },
+                            function (Builder $builder) {
+                                $builder->whereNull('products.deleted_at');
+                            },
+                        );
+                    }),
+                ])
                 ->defaultSort('id', 'title')
                 ->paginate()
                 ->appends(request()->query())
