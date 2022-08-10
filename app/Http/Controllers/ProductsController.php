@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\Product\CreateProductCommand;
+use App\Handler\Product\CreateProductHandler;
+use App\Http\Requests\Product\CreateProductRequest;
 use App\Http\Resources\Product\ProductFullResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class ProductsController extends Controller
 {
@@ -27,12 +31,22 @@ class ProductsController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param CreateProductRequest $request
+     * @param CreateProductHandler $handler
+     * @return ProductFullResource
+     * @throws UnknownProperties
      */
-    public function store(Request $request)
+    public function store(CreateProductRequest $request, CreateProductHandler $handler)
     {
-        //
+        $command = new CreateProductCommand(
+            title: $request->get('title'),
+            description: $request->get('description'),
+            price: $request->get('price'),
+            isPublished: $request->get('is_published'),
+            categories: $request->get('categories'),
+        );
+
+        return new ProductFullResource($handler->handle($command));
     }
 
     /**
