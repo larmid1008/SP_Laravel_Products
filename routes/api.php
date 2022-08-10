@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\ProductsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,5 @@ use Illuminate\Support\Facades\Route;
 
 Route::apiResource('category', CategoriesController::class)
     ->only('store', 'destroy');
+Route::apiResource('product', ProductsController::class)
+    ->except('show');
